@@ -1,0 +1,49 @@
+# Node.js
+node_modules/
+dist/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Variables de entorno
+.env
+.env.local
+.env.*
+!.env.example
+
+# Bases de datos y Prisma
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs y multimedia temporal
+*.log
+/uploads/
+/media/
+tmp/
+temp/
+
+# IDEs y Editores
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Python y Pytest
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+# Servicio IA: entorno virtual y pesos descargados (scripts/download_models.py)
+ai/.venv/
+ai/models/*.task
+ai/models/*.tflite
+ai/models/*.onnx
+ai/models/*.pt
+.coverage
+ai/models/hf/
+
+# Claves de servicios externos (cuenta de servicio de Firebase, etc.)
+secrets/

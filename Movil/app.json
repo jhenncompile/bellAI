@@ -1,0 +1,72 @@
+{
+  "expo": {
+    "name": "BellAI",
+    "slug": "bellai-app",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "bellai",
+    "userInterfaceStyle": "automatic",
+    "android": {
+      "package": "com.bellai.beauty",
+      "permissions": [
+        "CAMERA",
+        "READ_MEDIA_IMAGES",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE"
+      ],
+      "adaptiveIcon": {
+        "backgroundColor": "#08090E",
+        "foregroundImage": "./assets/images/android-icon-foreground.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "BellAI necesita acceso a tus fotos para actualizar tu foto de perfil."
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "BellAI requiere acceso a la cámara para realizar tu análisis de estilo."
+        }
+      ],
+      [
+        "expo-media-library",
+        {
+          "photosPermission": "BellAI guarda automáticamente las imágenes mejoradas en tu álbum BellAI.",
+          "savePhotosPermission": "BellAI necesita permiso para guardar las imágenes mejoradas en tu álbum BellAI."
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#08090E",
+          "image": "./assets/images/splash-icon.png",
+          "imageWidth": 76
+        }
+      ],
+      "expo-font",
+      "expo-image",
+      "expo-sharing",
+      "expo-status-bar",
+      "expo-web-browser",
+      "expo-secure-store",
+      "expo-notifications",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "BellAI usa tu ubicación aproximada solo para tener en cuenta el clima al sugerirte outfits."
+        }
+      ],
+      "onnxruntime-react-native"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

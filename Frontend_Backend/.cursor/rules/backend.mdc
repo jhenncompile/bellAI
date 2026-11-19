@@ -1,0 +1,25 @@
+---
+description: Módulos NestJS, guards de autenticación y roles, DTOs, cifrado de datos personales y cambios de esquema.
+globs: backend/**/*.ts,backend/**/*.sql,backend/**/*.py,backend/**/*.js
+alwaysApply: false
+---
+
+# Backend — NestJS + PostgreSQL
+
+**Reglas completas:**
+
+@.rules/20-backend.md
+
+**Tabla de endpoints y estado real:**
+
+@AGENTS.md
+
+## Lo mínimo
+
+- Un módulo por dominio en `src/modules/<modulo>/` con controlador, servicio, `dto/` y `entities/`; se registra en `app.module.ts`.
+- Los controladores llevan el prefijo en la ruta: `@Controller('api/usuarios')`. No hay `setGlobalPrefix`.
+- Ruta nueva ⇒ `@UseGuards(JwtAuthGuard)`, salvo que sea pública a propósito. Para roles, `RolesGuard` + `@Roles('admin')`.
+- Datos personales sensibles: cifrado con `CryptoService` (AES-256-GCM) y registro en `AuditLog`.
+- Todo body entra por un DTO con `class-validator`. El `ValidationPipe` global usa `whitelist`: lo que no está en el DTO se descarta.
+- `synchronize` de TypeORM se queda en `false`. Cambio de esquema = `backend/schema.sql` **y** migración en `backend/src/migrations/`.
+- Si tocas `backend/ai/**`, `pytest` tiene que pasar: ese workflow despliega a AWS.

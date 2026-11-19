@@ -1,0 +1,185 @@
+name: CI/CD Pipeline - Servicio de IA [TEC-15] (HU-30 / HU-032)
+
+on:
+  pull_request:
+    branches:
+      - main
+      - develop
+    paths:
+      - 'backend/ai/**'
+      - '.github/workflows/ai-models-ci-cd.yml'
+
+  push:
+    branches:
+      - main
+    paths:
+      - 'backend/ai/**'
+      - '.github/workflows/ai-models-ci-cd.yml'
+
+  workflow_dispatch:
+
+env:
+  AWS_REGION: ${{ secrets.AWS_REGION || 'us-east-1' }}
+  ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY || 'aura-ai-models' }}
+  ECS_CLUSTER: ${{ secrets.ECS_CLUSTER || 'aura-cluster' }}
+  ECS_SERVICE: ${{ secrets.ECS_SERVICE || 'aura-ai-service' }}
+  ECS_TASK_DEFINITION: backend/ai/aws/task-definition.json
+  CONTAINER_NAME: ai-models-container
+
+jobs:
+  # =========================================================================
+  # FASE 1: INTEGRACIÓN CONTINUA (Pruebas Automatizadas y Validación de Modelos)
+  # Criterio: Ejecución obligatoria de pytest antes de aprobar cualquier cambio
+  # =========================================================================
+  test-and-validate-models:
+    name: 🧪 Pruebas Automatizadas con pytest
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Descargar código fuente (Checkout)
+        uses: actions/checkout@v4
+
+      - name: Configurar entorno Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Instalar librerías de sistema para OpenCV y MediaPipe
+        # MediaPipe Tasks carga libEGL/libGLESv2 aunque use CPU (mismo arreglo que backend/ai/Dockerfile)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgl1 libglib2.0-0 libegl1 libgles2
+
+      - name: Instalar dependencias del servicio de IA
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r backend/ai/requirements-dev.txt
+
+      - name: Descargar modelos MediaPipe (rostro, pose, segmentación, manos)
+        run: python backend/ai/scripts/download_models.py backend/ai/models
+
+      - name: Ejecutar linter de sintaxis (Flake8)
+        run: |
+          flake8 backend/ai/app --count --select=E9,F63,F7,F82 --show-source --statistics
+
+      - name: Ejecutar colección de pruebas automatizadas (pytest)
+        env:
+          GARMENT_CLIP_WARMUP: '0'
+        run: |
+          pytest backend/ai/tests -v --cov=backend/ai/app --cov-report=term-missing --cov-fail-under=80
+
+  # =========================================================================
+  # FASE 2: EMPAQUETADO DOCKER Y PUBLICACIÓN EN AWS ECR
+  # Criterio: Empaquetar FastAPI, PyTorch y OpenCV en imágenes Docker
+  # =========================================================================
+  build-and-push-docker:
+    name: 🐳 Empaquetado Docker y Push a Amazon ECR
+    needs: test-and-validate-models
+    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    outputs:
+      image: ${{ steps.build-image.outputs.image }}
+
+    steps:
+      - name: Descargar código fuente (Checkout)
+        uses: actions/checkout@v4
+
+      - name: Configurar credenciales de AWS
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Autenticar en Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Construir y etiquetar imagen Docker
+        id: build-image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          IMAGE_URI="$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+          LATEST_URI="$ECR_REGISTRY/$ECR_REPOSITORY:latest"
+
+          echo "Construyendo imagen Docker para IA..."
+          docker build \
+            -t $IMAGE_URI \
+            -t $LATEST_URI \
+            -f backend/ai/Dockerfile backend/ai
+
+          echo "Subiendo imagen a Amazon ECR..."
+          docker push $IMAGE_URI
+          docker push $LATEST_URI
+
+          echo "image=$IMAGE_URI" >> $GITHUB_OUTPUT
+
+  # =========================================================================
+  # FASE 3: DESPLIEGUE CONTINUO EN AWS ECS (Zero-Downtime Rolling Update)
+  # Criterio: Despliegue transparente sin interrumpir operatividad (99% disponibilidad)
+  # =========================================================================
+  deploy-to-ecs-zero-downtime:
+    name: 🚀 Despliegue Zero-Downtime en AWS ECS
+    needs: build-and-push-docker
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Descargar código fuente (Checkout)
+        uses: actions/checkout@v4
+
+      - name: Configurar credenciales de AWS
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Configurar cuenta AWS real y parámetros en Task Definition
+        id: prepare-task-def
+        run: |
+          # Resolver ID de cuenta AWS real: secret explícito o auto-detección mediante AWS STS
+          ACCOUNT_ID="${{ secrets.AWS_ACCOUNT_ID }}"
+          if [ -z "$ACCOUNT_ID" ]; then
+            echo "Consultando ID de cuenta de AWS autenticada vía STS..."
+            ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+          fi
+          echo "ID de cuenta AWS activo: $ACCOUNT_ID"
+          echo "Región AWS activa: ${{ env.AWS_REGION }}"
+
+          # Reemplazar placeholders en task-definition.json
+          sed -i "s|<AWS_ACCOUNT_ID>|$ACCOUNT_ID|g" ${{ env.ECS_TASK_DEFINITION }}
+          sed -i "s|123456789012|$ACCOUNT_ID|g" ${{ env.ECS_TASK_DEFINITION }}
+          sed -i "s|<AWS_REGION>|${{ env.AWS_REGION }}|g" ${{ env.ECS_TASK_DEFINITION }}
+
+          # Sobrescritura de ARNs de roles en caso de proveerse por secrets
+          if [ -n "${{ secrets.ECS_EXECUTION_ROLE_ARN }}" ]; then
+            echo "Aplicando custom executionRoleArn desde secrets..."
+            sed -i "s|\"executionRoleArn\": \".*\"|\"executionRoleArn\": \"${{ secrets.ECS_EXECUTION_ROLE_ARN }}\"|g" ${{ env.ECS_TASK_DEFINITION }}
+          fi
+
+          if [ -n "${{ secrets.ECS_TASK_ROLE_ARN }}" ]; then
+            echo "Aplicando custom taskRoleArn desde secrets..."
+            sed -i "s|\"taskRoleArn\": \".*\"|\"taskRoleArn\": \"${{ secrets.ECS_TASK_ROLE_ARN }}\"|g" ${{ env.ECS_TASK_DEFINITION }}
+          fi
+
+          echo "Task Definition configurada:"
+          cat ${{ env.ECS_TASK_DEFINITION }}
+
+      - name: Renderizar nueva Task Definition con la imagen generada
+        id: render-task-def
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: ${{ env.ECS_TASK_DEFINITION }}
+          container-name: ${{ env.CONTAINER_NAME }}
+          image: ${{ needs.build-and-push-docker.outputs.image }}
+
+      - name: Desplegar en Amazon ECS Service (Rolling Update)
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+        with:
+          task-definition: ${{ steps.render-task-def.outputs.task-definition }}
+          service: ${{ env.ECS_SERVICE }}
+          cluster: ${{ env.ECS_CLUSTER }}
+          wait-for-service-stability: true

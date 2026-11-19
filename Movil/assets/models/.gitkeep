@@ -1,0 +1,1 @@
+# Mantener la carpeta assets/models en git sin commitear binarios pesados (.pt, .onnx, etc.)

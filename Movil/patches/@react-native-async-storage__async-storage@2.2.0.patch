@@ -1,0 +1,19 @@
+diff --git a/android/build.gradle b/android/build.gradle
+index 4560dc7d95f4f34aaecb8d0ce1e1bf4c0d6f97de..c8d864b8cb8cd7b94cf1098445c22210d907497a 100644
+--- a/android/build.gradle
++++ b/android/build.gradle
+@@ -88,6 +88,14 @@ android {
+             if (!isNewArchitectureEnabled) {
+                 srcDirs += 'src/oldarch/java'
+             }
++            // BellAI: con AGP 9 (Kotlin integrado) se compilan todos los .kt de src/main/java,
++            // incluido el almacenamiento "next" que necesita Room aunque esté desactivado.
++            if (!useNextStorage) {
++                exclude 'com/reactnativecommunity/asyncstorage/next/**'
++            }
++        }
++        if (!useNextStorage && it.hasProperty('kotlin')) {
++            kotlin.exclude 'com/reactnativecommunity/asyncstorage/next/**'
+         }
+     }
+ }

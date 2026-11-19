@@ -1,0 +1,32 @@
+---
+description: Arquitectura feature-based, reglas de dependencia entre capas, convenciones y estilos del frontend React.
+globs: Frontend/**/*.ts,Frontend/**/*.tsx,Frontend/**/*.css,Frontend/*.json,Frontend/*.js
+alwaysApply: false
+---
+
+# Frontend — arquitectura feature-based
+
+**Reglas completas:**
+
+@.rules/10-frontend.md
+
+**Arquitectura en detalle y deuda técnica:**
+
+@Frontend/AGENTS.md
+
+## Lo mínimo
+
+```
+src/app/        shell: providers, AppRoutes, setup
+src/layouts/    shell: AdminLayout, Sidebar, Topbar
+src/features/   dominio: auth, dashboard, users, profile, privacy
+src/shared/     base: ui, feedback, lib, store, types
+```
+
+- `shared/` **nunca** importa de `features/`, `layouts/` ni `app/`.
+- Entre features, solo por el barril: `@/features/auth`, nunca `@/features/auth/store/auth.store`.
+- Dentro de una feature, imports **relativos** (`../services/users.service`); cruzando capas, alias `@/`.
+- `pnpm lint` **falla** si rompes esto (`no-restricted-imports` en `eslint.config.js`). No lo silencies con `eslint-disable`.
+- Las peticiones HTTP van por `apiClient` de `@/shared/lib/axios`, dentro del `service` de su feature.
+- Estilos con tokens del tema (`bg-card`, `text-muted-foreground`), no colores crudos. Tailwind v4 vive en `src/index.css`.
+- Rutas solo en `src/app/routes/AppRoutes.tsx`.

@@ -1,0 +1,19 @@
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+pydantic==2.10.4
+pydantic-settings==2.7.0
+numpy==2.4.6
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch==2.15.0
+torchvision==0.29.2
+# MediaPipe instala opencv-contrib-python como dependencia (no mezclar con opencv-python-headless)
+mediapipe==1.2.3
+opencv-contrib-python==5.0.0.93
+pillow==11.0.0
+python-multipart==0.0.20
+# HU-010: clasificación zero-shot de prendas (opcional; sin pesos se usa la heurística)
+open_clip_torch==4.2.2
+# Modelos ONNX específicos (face parsing BiSeNet/ResNet-18, SegFormer de ropa). Opcional: sin él se usa MediaPipe
+onnxruntime==1.32.0
+# Avatar maniquí: simplifica el cabello generado a ~6 mil caras (MIT)
+fast-simplification==0.2.0

@@ -1,0 +1,18 @@
+services:
+  postgres:
+    ports:
+      - '55432:5432'
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: adm123
+      POSTGRES_DB: bellia
+
+  backend:
+    ports:
+      - '18000:8000'
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: adm123
+      DB_NAME: bellia

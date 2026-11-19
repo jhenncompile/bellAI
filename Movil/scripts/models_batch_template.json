@@ -1,0 +1,26 @@
+[
+  {
+    "weights": "C:/Users/ldgd2/Documents/universidad/software 1/sem 2-2026/ModelTrainingAI/checkpoints/armario/wardrobe_resnet34.pt",
+    "backbone": "resnet34",
+    "num_classes": 13,
+    "output_name": "wardrobe_resnet34",
+    "quantize": true,
+    "resolution": 224
+  },
+  {
+    "weights": "C:/Users/ldgd2/Documents/universidad/software 1/sem 2-2026/ModelTrainingAI/checkpoints/armario/wardrobe_mobilenet.pt",
+    "backbone": "mobilenet_v3_large",
+    "num_classes": 13,
+    "output_name": "wardrobe_mobilenet_v3",
+    "quantize": true,
+    "resolution": 224
+  },
+  {
+    "weights": "C:/Users/ldgd2/Documents/universidad/software 1/sem 2-2026/ModelTrainingAI/checkpoints/diagnostico/facial_diagnostic.pt",
+    "backbone": "mobilenet_v3_small",
+    "num_classes": 8,
+    "output_name": "facial_diagnostic_v1",
+    "quantize": true,
+    "resolution": 224
+  }
+]

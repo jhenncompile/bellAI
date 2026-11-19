@@ -1,0 +1,44 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+.pnp
+.pnp.js
+
+# Builds and generated files
+dist/
+build/
+web-build/
+.expo/
+.expo-shared/
+android/build/
+android/app/build/
+android/.gradle/
+android/.cxx/
+ios/build/
+ios/Pods/
+coverage/
+/.coverage
+
+# Environment and secrets
+/Frontend_Backend/.env
+/Frontend_Backend/.env.*
+!/Frontend_Backend/.env.example
+/Frontend_Backend/backend/.env
+/Frontend_Backend/backend/.env.*
+!/Frontend_Backend/backend/.env.example
+/Movil/.env
+/Movil/.env.*
+!/Movil/.env.example
+
+# Python caches
+__pycache__/
+.pytest_cache/
+.venv/
+venv/
+*.py[cod]
+
+# Logs and editors
+*.log
+.vscode/
+.idea/
+.DS_Store

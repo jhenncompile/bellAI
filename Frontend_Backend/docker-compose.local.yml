@@ -1,0 +1,16 @@
+services:
+  minio:
+    image: cgr.dev/chainguard/minio:latest
+    healthcheck:
+      disable: true
+
+  minio-init:
+    image: cgr.dev/chainguard/minio-client:latest
+    entrypoint: ["/usr/bin/mc"]
+    command:
+      - alias
+      - set
+      - localminio
+      - http://minio:9000
+      - minioadmin
+      - minioadmin_secret

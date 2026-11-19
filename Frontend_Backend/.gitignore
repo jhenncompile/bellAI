@@ -1,0 +1,34 @@
+# Dependencias y compilados
+node_modules/
+dist/
+build/
+.pnpm-store/
+
+# Variables de entorno locales
+.env
+.env.local
+.env.*
+!.env.example
+
+# Python y Pytest
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.venv/
+venv/
+
+# Multimedia y temporales
+uploads/
+tmp/
+temp/
+*.log
+
+# Editores y sistema operativo
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Copias de seguridad locales (scripts/backup.sh)
+backups/

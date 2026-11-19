@@ -1,0 +1,32 @@
+name: CI - Backend NestJS
+
+on:
+  pull_request:
+    branches: [main, develop]
+    paths: ['backend/**', '!backend/ai/**', '.github/workflows/backend-ci.yml']
+  push:
+    branches: [main]
+    paths: ['backend/**', '!backend/ai/**', '.github/workflows/backend-ci.yml']
+  workflow_dispatch:
+
+jobs:
+  build-and-test:
+    name: Compilación y pruebas (Jest + node:test)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+      - run: npm ci
+      - name: Compilar (tsc vía nest build)
+        run: npm run build
+      - name: Pruebas unitarias de los motores (cobertura mínima 80 %)
+        run: npm run test:cov
+      - name: Pruebas del armario digital
+        run: node --test tests/wardrobe.test.js
